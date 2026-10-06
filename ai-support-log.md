@@ -19,4 +19,4 @@
 
 | Ngày | Công cụ | Prompt/yêu cầu | Phần được hỗ trợ | Điều đã tự kiểm tra/chỉnh sửa |
 | --- | --- | --- | --- | --- |
-| | | | | |
+| 06/10/2026 | ChatGPT / Codex | Hướng dẫn Phase 0 và cập nhật repo theo yêu cầu người nộp | Điền phạm vi Reviewer, kiểm duyệt và xuất batch; đồng bộ README | Người nộp yêu cầu cập nhật sau đề xuất; chưa có số liệu kiểm chứng core action hoặc cadence |
