@@ -2,8 +2,11 @@
 
 - **Họ tên:** Phùng Gia Khánh
 - **Mã học viên:** 2A202602585
-- **Dự án dự kiến:** RAV-26 — chọn lọc dữ liệu cho xe tự lái
-- **Trạng thái:** Repo mẫu; các quyết định và kết quả chưa hoàn thiện.
+- **Dự án:** RAV-26 — chọn lọc dữ liệu cho xe tự lái
+- **Trạng thái:** Đã chốt Phase 0; Phase 1–5 chưa hoàn thiện.
+
+- **Persona:** Reviewer — người kiểm duyệt batch dữ liệu.
+- **Use case:** Kiểm duyệt và xuất batch để chuyển sang gán nhãn.
 
 ## Tệp bài làm
 
