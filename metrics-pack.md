@@ -1,6 +1,6 @@
 # Metrics Pack — Phùng Gia Khánh · 2A202602585
 
-> Bản mẫu Day 20. Chưa có số liệu đo thực tế. Cadence, ngưỡng chất lượng và activation cần được lập luận, không chọn chỉ để làm đẹp dashboard.
+> Track 1 · Day 20 · RAV-26. Hoàn thiện thiết kế đo lường, chưa có số liệu thực tế hoặc kết quả coach chấm. Các event và thuộc tính dưới đây là yêu cầu tracking đề xuất; chưa kiểm tra hoặc triển khai trong mã RAV-26. Nguồn: brief người nộp cung cấp, quyết định trong cuộc trao đổi và bản bài đã đẩy lên repo; chưa đọc deck Day 20.
 
 ## 00 — Dự án, persona, core job
 
@@ -10,9 +10,9 @@
 | Một persona | Reviewer — người kiểm duyệt batch dữ liệu |
 | Một use case chính | Kiểm duyệt và xuất batch để chuyển sang gán nhãn |
 | Core job — bằng lời người dùng | “Tôi cần chọn được bộ ảnh đáng gán nhãn, đủ chất lượng và ít trùng lặp, mà không mất quá nhiều thời gian kiểm tra.” |
-| Phạm vi và điều không phân tích | Chỉ phân tích bước kiểm duyệt và xuất batch; chưa phân tích nhập dữ liệu, chạy mô hình hoặc quản lý tài khoản. |
+| Phạm vi | Kiểm duyệt và xuất batch; không phân tích nhập dữ liệu, chạy mô hình hoặc quản lý tài khoản |
 
-**Lý do chọn phạm vi:** Đây là bước người dùng quyết định bộ ảnh có phù hợp để chuyển sang gán nhãn hay không, gần giá trị sử dụng hơn việc hệ thống chỉ tạo batch. Việc xuất batch chưa chứng minh dữ liệu cải thiện mô hình; core action và bằng chứng giá trị sẽ được định nghĩa ở Phase 1.
+Đây là bước Reviewer kiểm tra và nhận bộ dữ liệu có thể chuyển sang gán nhãn, gần giá trị sử dụng hơn việc AI chỉ tạo batch. Định hướng là sản phẩm hoàn chỉnh; phạm vi hẹp chỉ để phân tích sâu một use case trong lab.
 
 ## 01 — Core Action
 
@@ -20,38 +20,42 @@
 
 | Khái niệm | Nội dung |
 | --- | --- |
-| Core job — việc người dùng muốn hoàn thành | Chọn bộ ảnh đáng gán nhãn, đủ chất lượng và ít trùng lặp |
-| Core action — hành vi người dùng thực hiện | Kiểm duyệt và xuất một batch đạt yêu cầu |
-| Core value — lợi ích người dùng nhận được | Có bộ ảnh đã kiểm tra, sẵn sàng chuyển sang gán nhãn |
-| Core value event — dấu hiệu giá trị đã xảy ra | batch_export_completed — gói dữ liệu đã được tải xuống thành công |
+| Core job | Chọn bộ ảnh phù hợp để chuyển sang gán nhãn |
+| Core action | Kiểm duyệt và xuất một batch đạt yêu cầu |
+| Core value | Có bộ ảnh đã kiểm tra, sẵn sàng chuyển sang gán nhãn |
+| Core value event | `batch_export_completed` — đã duyệt đúng phiên bản và có xác nhận nhận gói dữ liệu đầy đủ |
 
 ### Core Action Card
 
 | Thành phần | Câu trả lời |
 | --- | --- |
-| Target user — ai thực hiện | Reviewer |
+| Target user | Reviewer được giao kiểm duyệt |
 | Core job | Chọn bộ ảnh phù hợp để chuyển sang gán nhãn |
 | Core action | Kiểm duyệt và xuất một batch đạt yêu cầu |
-| Object — đối tượng của hành vi | Một batch dữ liệu có phiên bản xác định |
-| Preconditions — điều kiện trước hành vi | Batch đã được gửi duyệt; Reviewer có quyền kiểm duyệt; có tiêu chí chất lượng |
-| Completion rule — khi nào hoàn tất | Quyết định duyệt được lưu; batch đáp ứng tiêu chí chất lượng; gói xuất được tải xuống thành công |
-| Core value | Nhận được bộ ảnh đã kiểm tra để chuyển sang gán nhãn |
-| Evidence of value — dấu hiệu và giới hạn bằng chứng | Có bản ghi duyệt và xác nhận tải gói dữ liệu thành công |
-| Candidate event — sự kiện dự kiến | batch_export_completed |
+| Object | Batch có batch_id, batch_version và manifest cố định |
+| Preconditions | Batch thật được giao hợp lệ; Reviewer có quyền; tiêu chí chất lượng được khóa theo quality_policy_version |
+| Completion rule | Quyết định approve đã lưu cho đúng phiên bản; kiểm tra chất lượng đạt; gói xuất đầy đủ; ứng dụng nhận xác nhận nhận gói hợp lệ; có ít nhất một ảnh mới đủ điều kiện trong phạm vi dự án |
+| Core value | Có bộ ảnh đã kiểm tra để chuyển sang gán nhãn |
+| Evidence of value | Quyết định duyệt, manifest, kết quả kiểm tra và receipt xác nhận nhận gói; là bằng chứng bàn giao, chưa chứng minh ảnh được gán nhãn hoặc giúp mô hình tốt hơn |
+| Candidate event | `batch_export_completed` |
 
-> Lưu ý: “Đạt yêu cầu” cần có tiêu chí rõ về ảnh lỗi, thông tin cá nhân và trùng lặp. Chưa tự đặt ngưỡng số khi chưa có căn cứ. Xuất thành công cũng chưa chứng minh ảnh giúp mô hình tốt hơn.
+**Điều kiện chất lượng vận hành đề xuất:** Reviewer xác nhận ảnh phù hợp mục tiêu đợt; ảnh đọc được; không còn lỗi PII đã phát hiện chưa xử lý; loại ảnh trùng hoàn toàn trong bộ xuất. Lưu phiên bản tiêu chí và kết quả kiểm tra. Nếu thiếu kết quả thì không tính là đạt. Đây không phải bảo đảm tuyệt đối rằng mọi PII hoặc ảnh gần trùng đã được phát hiện.
+
+**Xác nhận nhận gói:** Đề xuất ứng dụng kiểm tra đủ byte và checksum của gói rồi nhận xác nhận “đã nhận gói” từ Reviewer, lưu receipt phía máy chủ. Tạo ZIP, HTTP 200 hoặc click tải chưa đủ. Trình duyệt thông thường không xác nhận chắc chắn file đã lưu vào ổ đĩa; nếu chưa có cơ chế receipt, chỉ báo “gói xuất đã tạo”, chưa báo core value event này.
+
+**Ảnh mới:** hash nội dung ảnh đầu ra chưa có trong một lần bàn giao hợp lệ trước đó của cùng project_id. Xuất lại, sửa version hoặc chia nhỏ cùng bộ ảnh không tạo thêm giá trị. Ảnh sửa thực chất có hash mới vẫn có thể gần trùng; theo dõi bằng kiểm tra chất lượng sau xuất.
 
 ### Tự kiểm năm tiêu chí
 
-| Tiêu chí | Đánh giá và lý do |
+| Tiêu chí | Kết quả và lý do |
 | --- | --- |
-| Gần giá trị | Đạt — người dùng nhận được bộ ảnh có thể chuyển sang bước tiếp theo |
-| Có thể lặp lại | Đạt — mỗi đợt dữ liệu mới lại cần kiểm duyệt |
-| Quan sát được | Đạt về thiết kế — có điều kiện duyệt và xuất hoàn tất; cần kiểm tra khả năng ghi nhận |
-| Có ý nghĩa | Đạt có điều kiện — chỉ đếm batch đạt chất lượng, không đếm tải lại hoặc chia nhỏ batch để tăng số |
-| Có thể tác động | Đạt — cải thiện cách xem ảnh, kiểm duyệt và xuất dữ liệu |
+| Gần core value | Đạt về thiết kế: người dùng đã kiểm tra và nhận bộ dữ liệu |
+| Có thể lặp lại | Đạt: có đợt dữ liệu mới cần kiểm duyệt |
+| Có thể quan sát | Đạt về thiết kế: approval, manifest và receipt xác định completion; cần triển khai tracking để quan sát thực tế |
+| Có ý nghĩa | Đạt có điều kiện: yêu cầu chất lượng và ảnh mới; chống tải lại/chia nhỏ để tăng số |
+| Có thể tác động | Đạt: cải thiện xem ảnh, xử lý yêu cầu sửa, checklist và xuất dữ liệu |
 
-**Kết luận:** Đạt — chọn core action này vì người dùng đã kiểm tra và nhận bộ dữ liệu; việc AI tạo batch mới chỉ là đầu ra của hệ thống.
+**Kết luận:** Giữ core action; không chọn mở app, hỏi AI hay AI tạo batch. Năm tiêu chí là tự kiểm thiết kế, chưa phải xác thực với người dùng.
 
 ## 02 — Nature & cadence
 
@@ -59,24 +63,24 @@
 
 | Thành phần | Câu trả lời |
 | --- | --- |
-| Actor — user/account/team/object | Reviewer |
-| Intent — nhu cầu khởi đầu | Kiểm tra bộ ảnh trước khi chuyển sang gán nhãn |
-| Trigger — điều gì kích hoạt nhu cầu | Curator gửi batch mới cần kiểm duyệt |
-| Effort — thời gian, suy nghĩ, dữ liệu | Xem ảnh, kiểm tra tiêu chí, quyết định duyệt hoặc yêu cầu sửa; thời gian phụ thuộc số ảnh và chất lượng |
-| Value timing — khi nào nhận giá trị | Khi batch đạt yêu cầu và gói dữ liệu được tải xuống thành công; có thể chậm nếu cần sửa |
-| State — dữ liệu/trạng thái được giữ lại | Phiên bản batch, quyết định duyệt, lý do và lịch sử xuất |
-| Dependency — phụ thuộc người khác, phê duyệt, nguồn cung | Curator chuẩn bị batch, chất lượng dữ liệu và tiến độ gán nhãn của nhóm |
-| Repeat condition — vì sao cần lặp lại | Có batch mới thuộc đợt dữ liệu tiếp theo cần kiểm duyệt |
+| Actor | Reviewer |
+| Intent | Kiểm tra bộ ảnh để bàn giao gán nhãn |
+| Trigger | Curator gửi batch mới và giao trách nhiệm kiểm duyệt |
+| Effort | Xem ảnh, đối chiếu tiêu chí, duyệt hoặc yêu cầu sửa; thời gian phụ thuộc số ảnh, độ khó và chất lượng |
+| Value timing | Sau duyệt và xác nhận nhận gói; trễ khi cần sửa hoặc xuất thất bại |
+| State | Quyết định, lý do, phiên bản tiêu chí, manifest và lịch sử bàn giao |
+| Dependency | Dữ liệu Curator chuẩn bị, quyền truy cập, tiến độ sửa và kế hoạch gán nhãn |
+| Repeat condition | Có đợt mới với ảnh mới cần kiểm duyệt |
 
 **Dạng hành vi chính:** Quy trình làm việc của nhóm (workflow).
 
-**Kết luận cadence:**
+> Đối với Reviewer, core action kiểm duyệt và xuất batch đạt yêu cầu xuất hiện theo từng đợt dữ liệu vì nhóm cần chuẩn bị ảnh cho gán nhãn. Do đó, nhịp đo phù hợp là từng đợt dữ liệu ở cấp Reviewer.
 
-> Đối với Reviewer, hành vi kiểm duyệt và xuất batch đạt yêu cầu xuất hiện theo từng đợt dữ liệu vì nhóm cần chuẩn bị ảnh cho bước gán nhãn. Do đó, nhịp đo phù hợp là từng đợt dữ liệu ở cấp Reviewer.
+**Căn cứ:** Giả thuyết từ luồng công việc, chưa có số liệu về tần suất. Thu thời điểm giao/hoàn tất qua các đợt rồi kiểm tra; không mặc định daily/weekly/monthly.
 
-**Căn cứ và điều cần kiểm chứng:** Đây là giả thuyết dựa trên luồng công việc của RAV-26. Cần ghi nhận thời điểm gửi batch và hoàn tất kiểm duyệt qua nhiều đợt để biết nhịp thực tế. Chưa có căn cứ chọn hằng ngày, hằng tuần hoặc hằng tháng.
+**Quy ước đợt:** cycle_id là đợt dữ liệu, khác batch_id là bộ ảnh. Mỗi đợt có mục tiêu, thời điểm bắt đầu, hạn xử lý và hạn kiểm tra sau xuất đã thống nhất trước khi bắt đầu. Không đóng sớm hoặc kéo dài hạn sau khi xem kết quả để làm đẹp metric. Nhịp đợt là giả thuyết, cần đối chiếu kế hoạch thực tế.
 
-**Frequency cao hơn có luôn tốt hơn không?** Không. Nhiều lượt xuất có thể do tải lại, chia nhỏ batch hoặc sửa lỗi. Điều tốt hơn là hoàn tất dữ liệu đạt chất lượng trong thời gian hợp lý.
+**Tần suất cao hơn không luôn tốt hơn:** tải lại hoặc chia nhỏ batch có thể tăng số thao tác. Đo ảnh mới đạt yêu cầu, mức hoàn tất theo cơ hội và thời gian xử lý.
 
 ## 03 — Metric System
 
@@ -84,136 +88,160 @@
 
 | Thành phần | Định nghĩa |
 | --- | --- |
-| Start event | reviewer_first_assigned — Reviewer được giao batch đầu tiên cần kiểm duyệt |
-| First-value event — core action đầu tiên hoàn tất | batch_export_completed đầu tiên thỏa completion rule ở mục 01 |
-| Activation event/rule — đủ lần lặp để dự kiến giữ chân tốt hơn | Tạm dùng first value làm activation tạm thời: ≥1 batch_export_completed hợp lệ trong đợt dữ liệu đầu tiên được giao |
-| Time window từ start | Trong đợt dữ liệu đầu tiên được giao (chưa có căn cứ chọn số ngày/tuần cố định) |
-| Công thức activation rate — tử số / mẫu số | Số Reviewer đạt activation / Số Reviewer được giao ≥1 batch và đã hết đợt quan sát |
-| Căn cứ chọn ngưỡng và cách kiểm chứng | Chưa có dữ liệu retention để chọn ngưỡng lặp lại; tạm dùng first value và ghi rõ giới hạn chưa dự báo giữ chân. Kiểm chứng bằng cách đối chiếu nhóm activated với tỉ lệ quay lại ở đợt sau khi có dữ liệu. |
+| Start event | `batch_assigned` hợp lệ đầu tiên của Reviewer, có batch đủ điều kiện xem |
+| First-value event | `batch_export_completed` hợp lệ đầu tiên |
+| Activation rule | Tạm dùng first value: ít nhất một core value event trước hạn đợt đầu được giao |
+| Time window | Từ giao batch đầu tiên đến processing_deadline_at đã chốt của đợt đó |
+| A1 — First-value activation rate | Reviewer đạt first value trong window / Reviewer được giao hợp lệ ở đợt đầu và đã hết window |
+| Căn cứ và kiểm chứng | Là proxy activation tạm thời, chưa khẳng định có đủ lặp lại để dự báo retention. Sau nhiều đợt, đối chiếu nhóm một lần và nhóm hoàn tất ở hai đợt trước khi chốt ngưỡng lặp lại |
 
-Phân biệt: có hoạt động trong window ≠ đã activated. Nếu chỉ dùng first value làm activation tạm thời, ghi rõ giới hạn; chưa khẳng định dự báo retention.
+Có hoạt động trong window không có nghĩa đã activated. Reviewer bắt đầu xem nhưng chưa nhận gói chưa đạt first value. First value muộn vẫn tạo giá trị và có thể vào cohort retention, nhưng không đạt A1 đúng hạn.
 
 ### Engagement — tối đa hai góc đo
 
-| Metric | Frequency / depth / breadth | Công thức, unit, window | Event sử dụng |
+| Metric | Góc đo | Công thức và window | Event |
 | --- | --- | --- | --- |
-| E1 — Số batch đạt yêu cầu xuất thành công | Frequency | Count distinct (batch_id, batch_version) có batch_export_completed hợp lệ / Reviewer / đợt dữ liệu | batch_export_completed |
-| E2 — Tỉ lệ duyệt ngay lần đầu (first-pass approval rate) | Depth / chất lượng duyệt | Số batch duyệt ngay ở quyết định đầu / Tổng số batch đã có quyết định / đợt dữ liệu | batch_review_decided (decision, batch_version), batch_assigned để xác định mẫu số |
+| E1 — Tỷ lệ đợt hoàn tất theo cơ hội | Frequency | Số cặp (reviewer_id, cycle_id) có ≥1 core value event đúng hạn / số cặp được giao hợp lệ đã hết hạn; tổng hợp các đợt đã đủ quan sát, mỗi cặp trọng số một | `batch_assigned`, `batch_export_completed`, `cycle_closed` |
+| E2 — Ảnh mới đủ điều kiện xuất / Reviewer / đợt | Depth | Tổng ảnh mới trong các core value event của Reviewer trong đợt; báo cả giá trị 0 ở Reviewer được giao nhưng không hoàn tất | `batch_assigned`, `batch_export_completed`, `cycle_closed` |
 
 ### North Star Metric
 
 | Thành phần | Định nghĩa |
 | --- | --- |
-| Unit of value — đơn vị giá trị | Một batch đạt yêu cầu đã xuất thành công |
-| Quality threshold — điều kiện chất lượng | Có quyết định duyệt đã lưu và đáp ứng tiêu chí ảnh lỗi, thông tin cá nhân, trùng lặp; chưa đặt ngưỡng số khi chưa có căn cứ |
-| Frequency/window — khớp mục 02 | Theo đợt dữ liệu, ở cấp toàn nhóm (tổng hợp từ Reviewer), khớp cadence mục 02 |
-| NSM hoàn chỉnh và công thức | Số batch đạt yêu cầu được xuất thành công trong một đợt dữ liệu |
-| Event và thuộc tính cần để tính | batch_export_completed + thuộc tính batch_id, batch_version, reviewer_id, data_batch_id (đợt), decision_ref, exported_at |
+| Unit of value | Một ảnh mới duy nhất đã được duyệt và bàn giao hợp lệ |
+| Quality threshold | Thỏa tiêu chí mục 01, có quality_policy_version và quality_pass=true |
+| Frequency/window | Từng đợt dữ liệu; tổng hợp ở cấp dự án, phân rã theo Reviewer |
+| NSM | Số ảnh mới duy nhất đạt yêu cầu được bàn giao trong từng đợt |
+| Công thức | Count distinct image_hash có lần bàn giao hợp lệ đầu tiên trong project_id nằm trong window đợt |
+| Dữ liệu | `batch_export_completed`, immutable manifest, receipt, quality checks và `cycle_closed` |
 
-### Leading indicators — tối đa ba
+So NSM phải kiểm soát số ảnh đầu vào, số batch được giao và độ khó đợt. Giá trị này là proxy dữ liệu sẵn sàng gán nhãn; không đồng nghĩa hiệu quả mô hình. E2 phân rã NSM theo người, không phải một loại giá trị khác.
 
-| Metric | Định nghĩa/công thức/window | Vì sao dự kiến báo trước core action lặp lại | Event |
+### Leading indicators — hai chỉ số
+
+| Metric | Công thức/window | Giả thuyết dự báo | Event |
 | --- | --- | --- | --- |
-| L1 — Số batch được mở xem | Count batch_view_started / Reviewer / đợt dữ liệu | Mở xem là bước bắt buộc trước duyệt và xuất; không xem thì không thể hoàn tất | batch_view_started |
-| L2 — Tỉ lệ quyết định duyệt ở lần đầu | Số batch có decision=approve ở lần quyết định đầu / Tổng số batch được quyết định / đợt | Duyệt sớm báo trước xuất thành công trong cùng đợt; phải sửa nhiều thì xuất chậm | batch_review_decided |
-| L3 — Thời gian trung vị từ giao đến bắt đầu duyệt | Median(batch_view_started_at − batch_assigned_at) / đợt | Bắt đầu sớm tăng khả năng hoàn tất trong đợt; bắt đầu muộn cảnh báo tắc nghẽn | batch_assigned, batch_view_started |
+| L1 — Tỷ lệ batch đã bắt đầu kiểm duyệt | Số batch được giao có lượt xem đầu tiên đúng hạn / tổng batch được giao hợp lệ trong đợt; batch lineage chỉ đếm một lần, không tính version sửa là việc mới | Ít việc bị bỏ chờ có thể giúp nhận giá trị và quay lại ở đợt sau | `batch_assigned`, `batch_view_started`, `cycle_closed` |
+| L2 — Tỷ lệ duyệt ngay lần quyết định đầu | Batch có quyết định đầu tiên approve / batch đã có quyết định đầu tiên trong đợt | Ít phải sửa có thể giảm ma sát và hỗ trợ dùng lại; cũng có thể do duyệt qua loa, nên phải xem C1 | `batch_review_decided`, `cycle_closed` |
 
-Đây là giả thuyết dự báo, cần đối chiếu với retention thực tế.
+L2 xét quyết định đầu trên batch_id qua mọi version, không reset sau mỗi lần sửa. Hai liên hệ là giả thuyết, cần kiểm tra với retention; nguồn cung và chất lượng đầu vào có thể gây nhiễu.
 
-### Counter-metric — ít nhất một
+### Counter-metrics
 
-| Metric | Điều không được xấu đi khi NSM tăng | Công thức/window/ngưỡng | Event |
-| --- | --- | --- | --- |
-| C1 — Tỉ lệ batch bị nhóm gán nhãn trả về | Chất lượng sau xuất không được xấu đi khi tăng số batch xuất | Số batch_id đã xuất bị trả về / Tổng số batch_export_completed hợp lệ / cùng đợt; ngưỡng chưa đặt khi chưa có căn cứ, theo dõi xu hướng | batch_export_completed, batch_returned_by_labeling |
+| Metric | Công thức/window | Cách đọc |
+| --- | --- | --- |
+| C1 — Tỷ lệ ảnh lỗi sau bàn giao | Ảnh unique trong mẫu kiểm tra sau xuất bị đánh fail / ảnh unique đã kiểm tra; tổng hợp theo đợt xuất khi hết hạn audit | Lỗi ảnh/PII/gần trùng/không phù hợp không được tăng khi NSM tăng. Báo kèm coverage = ảnh đã audit / ảnh bàn giao và cách chọn mẫu; không coi ảnh chưa kiểm tra là pass |
+| C2 — Thời gian hoàn tất | Median(receipt_at − assigned_at) của batch_id hoàn tất lần đầu trong đợt, tính từ lần giao đầu tiên, không reset khi sửa version | Theo dõi thời gian có tăng khi NSM tăng không; luôn đọc cùng E1 và số việc chưa hoàn tất để tránh chỉ nhìn các việc nhanh |
+
+**Event C1:** `batch_inspection_completed` + `batch_export_completed` + `cycle_closed`.
+**Event C2:** `batch_assigned` + `batch_export_completed` + `cycle_closed`.
+
+Chưa có baseline để đặt target phần trăm hoặc thời gian. Thu baseline ở các đợt tương đương trước; thiếu audit thì C1 là “chưa đủ dữ liệu”, không phải 0% lỗi. Audit là nguồn phản hồi downstream, không đổi persona chính.
 
 ### Quy ước tính chung
 
-- Identity và unit đếm: reviewer_id cho Activation/Engagement/Retention; batch (cặp batch_id + batch_version) cho NSM. Mỗi (batch_id, batch_version) chỉ tính một lần.
-- Đối tượng và phiên bản được tính: chỉ batch có phiên bản xác định, có quyết định duyệt đã lưu và thỏa completion rule mục 01. Tải lại cùng version không tính thêm.
-- Timezone, mốc đầu/cuối window: window = một đợt dữ liệu (data_batch_id). Mốc đầu = thời điểm giao batch đầu tiên của đợt; mốc cuối = thời điểm đóng đợt. Timestamp lưu ISO 8601, múi giờ UTC+7.
-- Loại trừ tài khoản nội bộ/test/bot: loại trừ tài khoản test, demo, bot và batch demo khỏi mọi tử số/mẫu số.
-- Quy tắc chống đếm trùng: khóa chống trùng (reviewer_id, batch_id, batch_version, event_name) + export_id; reload/retry/autosave/tải lại không tạo thêm một hành vi.
-- Mẫu số bằng 0 hoặc chưa đủ thời gian quan sát: nếu không có unit đủ điều kiện hoặc đợt chưa kết thúc thì báo “chưa đủ dữ liệu”, không tính tỉ lệ bằng 0% hay 100%.
+- **Identity:** reviewer_id ổn định, project_id, cycle_id, batch_id và batch_version; không dùng tên/email làm khóa.
+- **Ownership:** một Reviewer chịu trách nhiệm đo trên mỗi batch. Đồng nghiệp có thể cộng tác nhưng không cùng nhận một lần hoàn tất. Chuyển giao trước bắt đầu tạo assignment mới, ghi lý do; báo riêng các việc chuyển/hủy, không xóa lịch sử. Start của một lineage không reset bởi sửa phiên bản.
+- **Window:** timestamp UTC; trình bày Asia/Ho_Chi_Minh. Đợt là [cycle_started_at, processing_deadline_at); đúng tại mốc cuối thuộc ngoài window. Gói hoàn tất muộn ghi nhận là late, không tính đúng hạn, vẫn có thể tạo giá trị thật.
+- **Ảnh mới:** sổ bàn giao theo (project_id, image_hash); cấp credit nguyên tử cho lần bàn giao hợp lệ đầu tiên. Không tăng NSM khi đổi version, đổi batch hoặc đổi Reviewer chứa lại cùng ảnh.
+- **Loại trừ:** test/demo/bot và dữ liệu demo. Nhân viên thật dùng trong vai trò Reviewer là người dùng hợp lệ, không loại chỉ vì nội bộ.
+- **Chống trùng:** event_id và business transition key; quyết định khác nhau là transition khác nhau. Bản xuất lại dùng cùng logical receipt key (project_id, batch_id, batch_version), không dùng export_id mới để tạo giá trị mới.
+- **Thiếu dữ liệu:** thiếu quality/receipt/manifest thì chưa hoàn tất; mẫu số 0 hoặc chưa hết hạn báo N/A. Lưu expected deadline trên assignment để biết đợt đã đủ quan sát ngay cả khi event đóng đợt bị thiếu; thiếu lifecycle event phải báo tracking incomplete.
+- **Audit:** chọn mẫu trước khi biết kết quả, lưu sampling_policy_version; mỗi ảnh dùng kết quả lần kiểm tra hợp lệ đầu tiên cho C1, lần kiểm tra lại sau sửa không xóa fail ban đầu. Báo cả kích thước mẫu, coverage và giới hạn đại diện.
 
 ## 04 — Retention Definition
 
-| Thành phần bắt buộc | Định nghĩa |
+| Thành phần | Định nghĩa |
 | --- | --- |
-| Unit | Reviewer (khớp cấp đo ở mục 02) |
-| Cohort entry — sự kiện vào nhóm | batch_export_completed đầu tiên thỏa completion rule mục 01 (first value) |
-| Return event — core action/value phải lặp lại | batch_export_completed hợp lệ ở đợt dữ liệu tiếp theo |
-| Window — thời gian quay lại | Đợt dữ liệu kế tiếp mà Reviewer được giao ≥1 batch (không dùng số ngày/tuần cố định khi chưa có căn cứ) |
-| Threshold — số lần tối thiểu trong window | ≥1 lần hợp lệ trong window |
-| Segment — áp dụng cho ai | Reviewer được giao ≥1 batch ở cả đợt gốc và đợt kế tiếp (có cơ hội quay lại) |
+| Unit | Reviewer trong cùng project_id |
+| Cohort entry | `batch_export_completed` hợp lệ đầu tiên; nhóm theo cycle_id first value |
+| Return event | `batch_export_completed` hợp lệ với batch mới và ảnh mới ở một đợt khác |
+| Window | Đợt khác được giao tiếp theo sau first value, theo thứ tự giao; từ assignment đầu của đợt đó đến processing_deadline_at đã chốt |
+| Threshold | Ít nhất một core value event hợp lệ đúng hạn |
+| Segment | Reviewer thật đã có first value, được giao việc đủ điều kiện ở đợt tiếp theo và đã hết hạn quan sát; loại test/demo/bot |
 
-**Công thức:** [Số Reviewer của cohort đạt return event và threshold trong window] / [số Reviewer hợp lệ của cohort đã đủ thời gian quan sát (đợt kế tiếp đã kết thúc)].
+**R1 — Tỷ lệ quay lại theo cơ hội được giao việc:**
+Reviewer của cohort hoàn tất return event trong window / Reviewer của cohort có cơ hội hợp lệ tiếp theo đã hết window.
 
-**Phân biệt không có nhu cầu mới với không quay lại dù có nhu cầu:** dùng retention có điều kiện theo cơ hội (conditional retention given opportunity). Reviewer không được giao batch mới trong đợt kế tiếp thì loại khỏi mẫu số, không tính là rời bỏ; đặt tên riêng khi báo cáo.
+**Event:** `batch_export_completed` (entry/return), `batch_assigned` (opportunity), `cycle_closed` (maturity).
+
+Báo kèm số người trong cohort ban đầu, có cơ hội mới, chưa có cơ hội, đang chờ hết hạn và bị chuyển/hủy. Người chưa có việc mới không tính là churn. Conditional retention chỉ trả lời “có quay lại khi được giao việc không”, chưa chứng minh nhu cầu hoặc mức tự nguyện; số cơ hội có thể phụ thuộc người điều phối. Không tạo thêm việc giả để tăng retention.
 
 ### Đối chiếu ba mốc
 
 | Mốc | Cách đối chiếu |
 | --- | --- |
-| Natural cycle — chu kỳ nhu cầu thật | Đợt dữ liệu của RAV-26 (mục 02); window retention = đợt kế tiếp, không quy ra ngày/tuần khi chưa đo thực tế |
-| Cohort đúng segment | Chỉ tính Reviewer có batch được giao ở cả hai đợt; ghi rõ số bị loại vì không có cơ hội |
-| Benchmark cùng loại sản phẩm và định nghĩa tương thích | Chưa có; không tự tạo số liệu |
+| Natural cycle | Kiểm tra lịch đợt và khoảng cách giao việc thật; không lấy D7/D30 khi chưa có căn cứ |
+| Cohort đúng segment | So Reviewer cùng vai trò, nguồn dữ liệu, khối lượng và độ khó; tách người mới/người quen |
+| Benchmark category | Chưa có nguồn với định nghĩa tương thích; dùng baseline nội bộ trước, không tự tạo chuẩn “tốt” |
 
 ## 05 — Product Loop
 
-**Loại loop chính:** Vòng lặp workflow của nhóm (team workflow loop) — Reviewer quay lại vì có batch mới cần xử lý để unblock gán nhãn, không phải vì viral hay notification.
+**Loop chính:** Workflow của nhóm.
 
 | Bước | Chu kỳ 1 | Chu kỳ 2 |
 | --- | --- | --- |
-| Natural trigger — nhu cầu tự nhiên | Curator gửi batch mới thuộc đợt hiện tại cần kiểm duyệt | Curator gửi batch mới thuộc đợt tiếp theo cần kiểm duyệt |
-| Core action | Kiểm duyệt và xuất batch đạt yêu cầu (batch_export_completed) | Kiểm duyệt và xuất batch đạt yêu cầu của đợt tiếp theo |
-| Immediate/repeat value | Có bộ ảnh đã kiểm tra, sẵn sàng chuyển sang gán nhãn | Có thêm bộ ảnh đã kiểm tra cho đợt tiếp theo |
-| Saved state/investment — điều giữ lại cho lượt sau | Phiên bản batch, quyết định duyệt, lý do và lịch sử xuất được lưu lại | Lịch sử duyệt/xuất tích lũy giúp lần sau duyệt nhanh và nhất quán hơn |
+| Natural trigger | Có đợt ảnh mới cần chuyển sang gán nhãn | Có đợt ảnh khác phục vụ nhu cầu gán nhãn tiếp theo |
+| Core action | Reviewer kiểm duyệt, yêu cầu sửa nếu cần, rồi xuất batch đạt yêu cầu | Reviewer làm hành vi đó với batch và ảnh mới |
+| Value | Nhận bộ ảnh đã kiểm tra để bàn giao | Nhận bộ ảnh mới đủ điều kiện |
+| Saved state/investment | Lưu tiêu chí, lý do duyệt/sửa, manifest, receipt và phản hồi audit | Tái sử dụng tiêu chí/lý do và học từ lỗi trước để xử lý nhất quán hơn |
 
-**Reason to return khi bỏ notification:** vẫn có batch mới được giao cần xử lý để không chặn bước gán nhãn; nhu cầu công việc kéo Reviewer quay lại mà không cần nhắc mở app.
+**Reason to return:** Có công việc thật mới; lịch sử chỉ giảm công sức thực hiện, không tạo nhu cầu. Nếu không có dữ liệu mới thì không ép quay lại bằng notification.
 
 **Metric hypothesis:**
+> Nếu lịch sử quyết định và phản hồi chất lượng giúp workflow tốt hơn, R1 sẽ tăng và C2 sẽ giảm qua ba đợt có cơ hội tiếp theo đã kết thúc, vì Reviewer ít phải xử lý lại vấn đề cũ; C1 không được tăng và E1 không được giảm.
 
-> Nếu loop này hoạt động, metric E1 (số batch hoàn tất / Reviewer / đợt) sẽ ổn định và thời gian trung vị từ giao đến xuất sẽ giảm qua các đợt, vì trạng thái lưu (quyết định, lý do, lịch sử xuất) giúp duyệt nhanh hơn và batch mới tạo nhu cầu quay lại.
+Ba đợt là khung thử đề xuất, không phải chu kỳ nhu cầu đã xác thực. So với baseline từ các đợt trước tương đương; nếu chưa có baseline, thu baseline trước, chưa kết luận tăng/giảm.
 
-**Cách thử và yếu tố có thể gây nhiễu:** so sánh E1, L3 và NSM theo từng đợt dữ liệu; kiểm soát số batch được giao, chất lượng ảnh đầu vào và thay đổi nhân sự Reviewer/Curator. Không suy ra loop hiệu quả chỉ từ tương quan hoặc số lượt mở app tăng.
+**Cách thử:** Cho một nhóm dùng lịch sử/checklist rõ hơn; giữ nguồn cung, số ảnh, độ khó và cách giao việc tương đương nhóm đối chiếu nếu có thể. So R1, C2, C1, E1; phân tích người mới/người quen và dữ liệu thiếu. Nếu chỉ so trước/sau thì kết quả mang tính gợi ý, chưa chứng minh quan hệ nhân quả. Chưa khẳng định các tính năng này đã triển khai.
 
 ## 06 — Tracking nhanh
 
-Điền 4–8 core events. Tên theo dạng object_action; chỉ giữ event tính được metric.
+Sáu core events, mỗi event dùng được để tính metric. Đây là contract đề xuất, không phải báo cáo tracking đang hoạt động.
 
-| Tên event | Ý nghĩa — điều đã xảy ra | Thời điểm ghi nhận chính xác | Metric sử dụng ở mục 03/04 |
+| Tên event | Điều đã xảy ra | Thời điểm ghi nhận chính xác | Metric sử dụng |
 | --- | --- | --- | --- |
-| batch_assigned | Curator giao một batch (có version) cho Reviewer | Khi bản ghi giao việc đã lưu thành công, kèm batch_id, batch_version, reviewer_id, data_batch_id, assigned_at | Activation (mẫu số), E2 (mẫu số), L3, Retention (cơ hội quay lại) |
-| batch_view_started | Reviewer mở xem batch để kiểm duyệt | Khi màn hình duyệt mở thành công với đúng batch_id + version, kèm reviewer_id, data_batch_id, viewed_at | L1, L3 |
-| batch_review_decided | Quyết định duyệt hoặc yêu cầu sửa đã được lưu | Khi quyết định + lý do + version đã lưu thành công (không tính bấm nút chưa lưu/thất bại), kèm decision, decided_at | E2, L2 |
-| batch_export_completed | Gói dữ liệu của batch đạt yêu cầu đã được tải xuống thành công | Khi file xuất đã tạo xong và xác nhận tải thành công cho đúng (batch_id, version) đã duyệt, kèm export_id, exported_at | Activation, E1, NSM, Retention (entry/return) |
-| batch_returned_by_labeling | Nhóm gán nhãn trả về batch đã xuất để làm lại | Khi bản ghi trả về đã lưu thành công, kèm batch_id, batch_version, reason, returned_at | C1 (counter-metric) |
+| `batch_assigned` | Batch đủ điều kiện đã được giao cho Reviewer | Sau transaction assignment lưu thành công; kèm assignment_id, owner, cycle_id, batch/version, deadline, eligibility và lý do chuyển/hủy nếu có | A1 start/mẫu số, E1/E2 population, L1 mẫu số, C2 start, R1 opportunity |
+| `batch_view_started` | Reviewer bắt đầu xem batch đã được giao | Khi dữ liệu và gallery đúng batch/version đã tải, hiển thị thành công trong tab đang hiện; ghi lần đầu của assignment, không khi click hoặc chỉ tải khung rỗng | L1 tử số |
+| `batch_review_decided` | Quyết định approve/revise/reject đã lưu | Sau transaction quyết định thành công, kèm decision_id, sequence, decision, version và quality_policy_version; không bắn khi mới bấm | L2 |
+| `batch_export_completed` | Bàn giao hợp lệ thỏa completion rule mục 01 | Sau kiểm tra approval/quality/manifest và receipt được lưu; kèm manifest_ref, receipt_at, new_image_count, new_image_hashes và first-value credit; không khi ZIP vừa tạo | A1, E1/E2, NSM, C1 population, C2 end, R1 entry/return |
+| `batch_inspection_completed` | Kết quả kiểm tra mẫu ảnh sau bàn giao đã lưu | Sau audit commit; kèm export/receipt_ref, image_hash, result pass/fail, defect_type, sampling_policy_version, inspected_at và audit_deadline_at | C1 tử số/mẫu số/coverage |
+| `cycle_closed` | Đợt đến hạn xử lý hoặc hoàn tất thời hạn audit | Khi trạng thái đóng đã lưu; stage=processing/audit, kỳ hạn đã chốt và mốc đóng thực tế. Hai stage có transition key khác nhau | A1/E1/E2/NSM/L1/L2/C2/R1 window; C1 audit maturity |
 
-Có thể thêm tối đa bốn hàng. Với metric cần thời gian/chất lượng, bổ sung thuộc tính hoặc event đủ để tính; không chỉ ghi tên metric.
+**Properties chung:** event_id, schema_version, occurred_at_utc, project_id, cycle_id, actor_id/actor_role, environment và is_test; event batch có batch_id/batch_version/assignment_id nếu phù hợp. Chỉ lưu ID/hash/tham chiếu, không đưa ảnh, thông tin cá nhân hay nội dung ghi chú vào telemetry.
+
+Manifest và quality record là nguồn dữ liệu bất biến được event tham chiếu, không cần bắn thêm click events. new_image_count phải khớp danh sách hash được cấp credit; số lượng lớn có thể dùng manifest_ref thay vì nhét toàn bộ hash vào event.
 
 ### Tiêu chí nghiệm thu
 
-1. **Hoàn tất thật:** Event xác nhận core action chỉ được ghi khi completion rule ở mục 01 được thỏa mãn và trạng thái đã lưu thành công. Bấm nút, tác vụ thất bại hoặc đang xử lý không được tính hoàn tất. Cụ thể: batch_export_completed chỉ ghi khi đã có batch_review_decided=approve cho đúng version và xác nhận tải gói thành công.
-2. **Không ghi trùng:** Với cùng actor, object, version và lần chuyển trạng thái, reload/retry/autosave không tạo thêm một hành vi. Chốt khóa chống trùng cụ thể sau khi chọn event. Cụ thể: khóa (reviewer_id, batch_id, batch_version, event_name) + export_id cho xuất; tải lại cùng version không tạo batch_export_completed mới.
-3. **Đủ dữ liệu tính:** Mỗi metric phải có event/thuộc tính để tính tử số, mẫu số, chất lượng và window. Thiếu dữ liệu phải báo thiếu, không tự coi là đạt. Cụ thể: mọi event mang data_batch_id để tính theo đợt; batch_export_completed mang decision_ref để đối chiếu chất lượng.
-4. **Lần lặp hợp lệ:** Phân biệt một hành vi mới với tải lại hoặc xuất lại cùng kết quả; nêu rõ quy tắc trước khi tính engagement/retention. Cụ thể: chỉ đếm distinct (batch_id, batch_version) có duyệt hợp lệ; xuất lại/tải lại cùng version chỉ tính một lần cho E1/NSM/Retention.
+1. **Hoàn tất thật:** Nếu approval sai version, còn lỗi chặn, thiếu receipt hoặc checksum sai thì không có `batch_export_completed`. Tạo ZIP/HTTP 200/click tải không được tính first value.
+2. **Retry không tăng số:** Với cùng logical receipt (project_id, batch_id, batch_version), retry, reload và export_id mới không tạo thêm value event. Event transport gửi lại cùng event_id được deduplicate.
+3. **Chia batch không tăng NSM:** Xuất 20 hash mới rồi xuất lại chúng trong hai batch khác/version khác/Reviewer khác thì NSM vẫn chỉ 20. Test fixture này là ví dụ kiểm thử, không phải kết quả đo.
+4. **Quyết định đầu không bị reset:** revise ở version 1 rồi approve ở version 2 không tính first-pass approval; hai quyết định vẫn được lưu bằng hai decision_id.
+5. **Quay lại đúng nhu cầu:** Cùng đợt hoặc tải lại không tính return. Có ảnh mới ở đợt kế tiếp đúng window mới được tính. Không có assignment mới thì không vào mẫu số R1; chưa hết hạn thì pending.
+6. **Thiếu audit không phải tốt:** Không có audit thì C1=N/A; không chuyển thành 0% lỗi. Fail rồi sửa/pass lại không xóa lỗi của audit đầu.
+7. **Lifecycle đúng hạn:** Hạn đã khóa trước khi giao; đóng sớm hoặc thiếu event lifecycle được gắn tracking incomplete, không tự loại người chưa hoàn tất khỏi mẫu số.
 
 ### Tự soi lỗi và năm gate
 
-- [x] Gate 1: Core action có actor/object/completion rule, qua năm tiêu chí.
-- [x] Gate 2: Cadence theo template và có lý do từ nature.
-- [x] Gate 3: Retention đủ sáu thành phần; NSM có value + quality + frequency; có counter-metric.
-- [x] Gate 4: Loop đủ hai chu kỳ, có reason to return và metric hypothesis.
-- [x] Gate 5: Có 4–8 events map về metric và ít nhất hai tiêu chí nghiệm thu cụ thể.
-- [x] Mọi event map về metric; mọi metric có event/thuộc tính đủ để tính.
-- [x] README có link Metrics Pack xem được.
-- [x] AI Support Log phản ánh đúng việc đã dùng AI.
-- [ ] Phần áp dụng cho dự án thật đã được người nộp điền.
+- [x] Gate 1 — Có actor/object/completion rule, tự kiểm năm tiêu chí.
+- [x] Gate 2 — Có Nature Card và kết luận cadence từ nhu cầu công việc.
+- [x] Gate 3 — Có activation, hai góc engagement, NSM value + quality + cadence, leading/counter; retention đủ sáu thành phần.
+- [x] Gate 4 — Hai chu kỳ workflow và hypothesis nối R1/C2/C1/E1.
+- [x] Gate 5 — Sáu events map metric, có tiêu chí hoàn tất và chống trùng.
+- [x] Mọi metric có event/thuộc tính; mọi event map về metric.
+- [x] README liên kết Metrics Pack trong repo công khai.
+- [x] AI Support Log khai báo hỗ trợ thực tế và giới hạn.
+- [x] Có đề xuất áp dụng cho dự án thật trong README, ghi rõ AI hỗ trợ soạn.
 
-### Revision — lý do thay đổi lớn
+Checklist là tự kiểm nội dung bài, không phải coach chấm pass, test tự động đã chạy hoặc tracking đã triển khai.
+
+### Revision — lý do thay đổi
 
 | Ngày | Thay đổi | Lý do |
 | --- | --- | --- |
-| 06/10/2026 | Tạo khung 00–06; chưa chốt core action/cadence/metric | Chuẩn bị repo mẫu để làm bài cá nhân, chưa có bằng chứng đo thực tế |
-| 06/10/2026 | Chốt Phase 0: Reviewer, kiểm duyệt và xuất batch | Giữ một persona và một use case gần giá trị sử dụng; các Phase 1–5 chưa hoàn thiện |
-| 06/10/2026 | Hoàn thiện 01–06: core action batch_export_completed, cadence theo đợt, metric/retention/loop/5 events, quy ước chống trùng | Khớp logic workflow Reviewer; không đặt ngưỡng số khi chưa có căn cứ; mọi metric có event để tính |
+| 06/10/2026 | Tạo khung 00–06 rồi chốt Reviewer, kiểm duyệt và xuất batch | Giữ một persona/use case gần giá trị |
+| 06/10/2026 | Người nộp đẩy bản điền 01–06 có hỗ trợ OpenCode | Hoàn thiện bản nháp theo cadence đợt |
+| 06/10/2026 | Thống nhất start thành batch_assigned; giữ first-value activation là proxy tạm | Xóa tên event không có trong tracking; chưa có bằng chứng cho ngưỡng lặp |
+| 06/10/2026 | Đổi NSM/depth sang ảnh mới unique, gắn receipt và policy chất lượng | Chống tăng số bằng tải lại, đổi version hoặc chia batch; tránh coi tạo ZIP là nhận giá trị |
+| 06/10/2026 | Định nghĩa C2, audit C1 và vòng đời đợt; sửa loop và đủ sáu events | Hypothesis dùng metric tính được; mẫu số chất lượng chỉ gồm ảnh thực sự kiểm tra |
