@@ -3,34 +3,45 @@
 - **Họ tên:** Phùng Gia Khánh
 - **Mã học viên:** 2A202602585
 - **Dự án:** RAV-26 — chọn lọc dữ liệu cho xe tự lái
-- **Trạng thái:** Đã hoàn thiện 00–06; chưa có số liệu đo thực tế.
-
-- **Persona:** Reviewer — người kiểm duyệt batch dữ liệu.
-- **Use case:** Kiểm duyệt và xuất batch để chuyển sang gán nhãn.
+- **Persona:** Reviewer — người kiểm duyệt batch dữ liệu
+- **Use case:** Kiểm duyệt và xuất batch để chuyển sang gán nhãn
+- **Trạng thái:** Đủ mục 00–06 và tự kiểm năm gate về nội dung; chưa có số liệu thực tế, kết quả coach chấm hoặc xác nhận triển khai tracking.
 
 ## Tệp bài làm
 
-[**Mở Metrics Pack**](metrics-pack.md) — mẫu đủ mục 00–06, có bảng tracking và checklist năm gate.
+[**Mở Metrics Pack hoàn chỉnh**](metrics-pack.md)
 
-Repo công khai nên người có đường dẫn có thể xem tệp. Không đưa mật khẩu, dữ liệu riêng hoặc ảnh có thông tin cá nhân vào bài.
+Tệp nằm trong repo công khai, người có đường dẫn có thể xem mà không cần cấp quyền riêng.
 
-## Cách dùng
+## Các quyết định chính
 
-1. Chốt một persona và một use case ở mục 00.
-2. Điền lần lượt: core action → nhịp tự nhiên → metric và retention → loop → event.
-3. Kiểm tra mọi metric có dữ liệu để tính và mọi event phục vụ một metric.
-4. Hoàn thiện phần áp dụng bên dưới và [nhật ký hỗ trợ AI](ai-support-log.md).
+| Mục | Quyết định |
+| --- | --- |
+| Core action | Reviewer kiểm duyệt và nhận gói batch đạt yêu cầu để bàn giao |
+| Cadence | Theo từng đợt dữ liệu, không ép sử dụng mỗi ngày |
+| Activation | First value trong đợt đầu là proxy tạm thời; chưa khẳng định dự báo ở lại |
+| North Star | Ảnh mới duy nhất đạt yêu cầu được bàn giao / đợt dữ liệu |
+| Retention | Có hoàn tất khi được giao đợt mới tiếp theo không; tách người chưa có cơ hội |
+| Loop | Công việc mới + lịch sử giúp giảm công sức; thử bằng R1, C2 và guardrails |
+| Tracking | Sáu events, có quy tắc hoàn tất, identity, window và chống đếm trùng |
 
-## Điều tôi mang về áp dụng cho dự án thật
+## Điều mang về áp dụng cho dự án thật
 
-> Bản nháp do AI gợi ý theo logic bài làm — người nộp cần viết lại bằng ý của mình trước khi nộp:
-> 1. Áp dụng quy tắc “mỗi (batch_id, version) chỉ đếm một lần, tải lại không tính” khi báo cáo số batch hoàn tất, để không thổi phồng NSM/E1.
-> 2. Ghi thêm data_batch_id, decision và lý do trả về (batch_returned_by_labeling) cho mọi batch xuất, vì hiện chưa đo được chất lượng sau xuất và tỉ lệ duyệt ngay lần đầu.
-> 3. Đo tiếp thời gian từ giao đến bắt đầu duyệt (L3) và tỉ lệ bị gán nhãn trả về (C1) qua 2–3 đợt dữ liệu để kiểm chứng cadence theo đợt và ngưỡng chất lượng trước khi chốt số.
+**Đề xuất áp dụng — AI hỗ trợ tổng hợp từ bài làm, chưa phải các thay đổi đã triển khai:**
 
-## Các file
+1. Đo bộ ảnh Reviewer thực sự nhận được, không chỉ batch AI đã tạo. Gắn approval đúng phiên bản, manifest và receipt; không coi click tải là bàn giao thành công.
+2. Đếm ảnh mới theo hash ở cấp dự án. Tải lại, chia nhỏ batch hoặc đổi Reviewer không làm chỉ số giá trị tăng.
+3. Ghi cycle_id, hạn xử lý và cơ hội được giao việc để đo retention đúng nhịp; không coi người chưa có batch mới là bỏ sản phẩm.
+4. Theo dõi thời gian hoàn tất cùng tỷ lệ ảnh lỗi sau bàn giao và độ phủ kiểm tra. Thu baseline qua các đợt tương đương trước khi đặt target.
+5. Kiểm tra khả năng triển khai các sự kiện trong mã RAV-26 trước khi báo cáo số đo; đọc tracking thiếu như dữ liệu thiếu, không biến thành 0% lỗi hoặc 100% thành công.
 
-- [metrics-pack.md](metrics-pack.md): bài làm chính.
-- [ai-support-log.md](ai-support-log.md): khai báo hỗ trợ AI thực tế.
+Người nộp cần đọc và bảo vệ các quyết định trên bằng hiểu biết của mình; phần này không mô tả trải nghiệm hoặc kết quả đo chưa có.
 
-Các ô “Chưa chốt” là nội dung cần làm, không phải bằng chứng đã hoàn thành hay coach đã đánh giá đạt.
+## Giới hạn
+
+- Nguồn là brief, nội dung trao đổi và bản repo hiện có; chưa đọc trực tiếp deck Day 20.
+- Chưa có benchmark tương thích hoặc dữ liệu người dùng để xác thực cadence và activation.
+- Receipt là cơ chế đề xuất để quan sát nhận gói; chưa xác nhận sản phẩm có sẵn.
+- NSM phản ánh dữ liệu sẵn sàng bàn giao, chưa chứng minh cải thiện mô hình hoặc nhu cầu thị trường.
+
+[Nhật ký hỗ trợ AI](ai-support-log.md).
