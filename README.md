@@ -3,7 +3,7 @@
 - **Họ tên:** Phùng Gia Khánh
 - **Mã học viên:** 2A202602585
 - **Dự án:** RAV-26 — chọn lọc dữ liệu cho xe tự lái
-- **Trạng thái:** Đã chốt Phase 0; Phase 1–5 chưa hoàn thiện.
+- **Trạng thái:** Đã hoàn thiện 00–06; chưa có số liệu đo thực tế.
 
 - **Persona:** Reviewer — người kiểm duyệt batch dữ liệu.
 - **Use case:** Kiểm duyệt và xuất batch để chuyển sang gán nhãn.
@@ -23,7 +23,10 @@ Repo công khai nên người có đường dẫn có thể xem tệp. Không đ
 
 ## Điều tôi mang về áp dụng cho dự án thật
 
-> Chưa điền. Viết bằng ý của mình sau khi làm bài: quyết định nào sẽ áp dụng, vì sao và cần đo thêm điều gì.
+> Bản nháp do AI gợi ý theo logic bài làm — người nộp cần viết lại bằng ý của mình trước khi nộp:
+> 1. Áp dụng quy tắc “mỗi (batch_id, version) chỉ đếm một lần, tải lại không tính” khi báo cáo số batch hoàn tất, để không thổi phồng NSM/E1.
+> 2. Ghi thêm data_batch_id, decision và lý do trả về (batch_returned_by_labeling) cho mọi batch xuất, vì hiện chưa đo được chất lượng sau xuất và tỉ lệ duyệt ngay lần đầu.
+> 3. Đo tiếp thời gian từ giao đến bắt đầu duyệt (L3) và tỉ lệ bị gán nhãn trả về (C1) qua 2–3 đợt dữ liệu để kiểm chứng cadence theo đợt và ngưỡng chất lượng trước khi chốt số.
 
 ## Các file
 

@@ -20,3 +20,4 @@
 | Ngày | Công cụ | Prompt/yêu cầu | Phần được hỗ trợ | Điều đã tự kiểm tra/chỉnh sửa |
 | --- | --- | --- | --- | --- |
 | 06/10/2026 | ChatGPT / Codex | Hướng dẫn Phase 0 và cập nhật repo theo yêu cầu người nộp | Điền phạm vi Reviewer, kiểm duyệt và xuất batch; đồng bộ README | Người nộp yêu cầu cập nhật sau đề xuất; chưa có số liệu kiểm chứng core action hoặc cadence |
+| 06/10/2026 | OpenCode (Muse Spark) | Điền mục 01, 02 theo nội dung người nộp chốt; hoàn thiện 03–06, README, checklist | Core action batch_export_completed, cadence theo đợt, Activation/E1-E2/NSM/L1-L3/C1, retention theo đợt có điều kiện, loop workflow, 5 events + khóa chống trùng | Người nộp đã chốt 01–02; phần 03–06 do AI dự thảo theo đúng logic đó, chưa có số liệu thực — người nộp cần tự kiểm tra, viết lại phần áp dụng bằng ý mình và bảo vệ trước coach |
