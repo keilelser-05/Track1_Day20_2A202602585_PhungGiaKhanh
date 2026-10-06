@@ -6,11 +6,13 @@
 
 | Mục | Câu trả lời |
 | --- | --- |
-| Dự án | RAV-26 — chọn lọc dữ liệu cho xe tự lái (dự kiến) |
-| Một persona | Chưa chốt |
-| Một use case chính | Chưa chốt |
-| Core job — bằng lời người dùng | Chưa chốt |
-| Phạm vi và điều không phân tích | Chưa chốt |
+| Dự án | RAV-26 — hỗ trợ chọn lọc dữ liệu cho xe tự lái |
+| Một persona | Reviewer — người kiểm duyệt batch dữ liệu |
+| Một use case chính | Kiểm duyệt và xuất batch để chuyển sang gán nhãn |
+| Core job — bằng lời người dùng | “Tôi cần chọn được bộ ảnh đáng gán nhãn, đủ chất lượng và ít trùng lặp, mà không mất quá nhiều thời gian kiểm tra.” |
+| Phạm vi và điều không phân tích | Chỉ phân tích bước kiểm duyệt và xuất batch; chưa phân tích nhập dữ liệu, chạy mô hình hoặc quản lý tài khoản. |
+
+**Lý do chọn phạm vi:** Đây là bước người dùng quyết định bộ ảnh có phù hợp để chuyển sang gán nhãn hay không, gần giá trị sử dụng hơn việc hệ thống chỉ tạo batch. Việc xuất batch chưa chứng minh dữ liệu cải thiện mô hình; core action và bằng chứng giá trị sẽ được định nghĩa ở Phase 1.
 
 ## 01 — Core Action
 
@@ -210,3 +212,4 @@ Có thể thêm tối đa bốn hàng. Với metric cần thời gian/chất lư
 | Ngày | Thay đổi | Lý do |
 | --- | --- | --- |
 | 06/10/2026 | Tạo khung 00–06; chưa chốt core action/cadence/metric | Chuẩn bị repo mẫu để làm bài cá nhân, chưa có bằng chứng đo thực tế |
+| 06/10/2026 | Chốt Phase 0: Reviewer, kiểm duyệt và xuất batch | Giữ một persona và một use case gần giá trị sử dụng; các Phase 1–5 chưa hoàn thiện |
